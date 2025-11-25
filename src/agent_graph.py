@@ -119,7 +119,11 @@ def planner_node(state: AgentState):
     
     planner_llm = llm_planner.with_structured_output(Plan)
     
-    plan = planner_llm.invoke([SystemMessage(content=planner_prompt), HumanMessage(content=user_request)])
+    # Pass the entire message history to the planner so it has context
+    # We prepend the system prompt to the history
+    planner_messages = [SystemMessage(content=planner_prompt)] + messages
+    
+    plan = planner_llm.invoke(planner_messages)
     
     if plan.response:
         print(colored(f"   [Planner]: Direct Response: {plan.response}", "cyan", attrs=['bold']))
@@ -384,8 +388,15 @@ def synthesis_node(state: AgentState):
     Aggregates the responses from all agents into a final, cohesive answer.
     """
     # In the new flow, 'results' dict holds task outputs, not messages.
-    # The original user request is in messages[0]
-    user_request = state["messages"][0].content
+    # Find the latest user request (ignoring critiques)
+    messages = state["messages"]
+    user_request = messages[-1].content
+    
+    for msg in reversed(messages):
+        if isinstance(msg, HumanMessage):
+            if not msg.content.startswith("CRITIQUE:"):
+                user_request = msg.content
+                break
     
     # Collect all results from the 'results' dict
     combined_info = "\n\n".join([f"Task {task_id}: {result}" for task_id, result in state["results"].items()])
