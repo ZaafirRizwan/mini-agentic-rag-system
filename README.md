@@ -6,39 +6,8 @@ A production-ready, graph-based RAG (Retrieval-Augmented Generation) system powe
 
 The system uses a **Supervisor-Worker** pattern implemented with LangGraph.
 
-```mermaid
-graph TD
-    User[User Input] --> Main[Main CLI]
-    Main --> Agent[LangGraph Agent]
-    
-    subgraph "Agent Workflow (LangGraph)"
-        Start((Start)) --> Planner[Planner Node]
-        Planner -->|Direct Response| Ver[Verification Node]
-        Planner -->|Tasks| Sched[Scheduler Node]
-        
-        Sched -->|Task| Res[Research Agent]
-        Sched -->|Task| Ops[Ops Agent]
-        
-        Res -->|Result| Sched
-        Ops -->|Result| Sched
-        
-        Sched -->|All Tasks Done| Syn[Synthesis Node]
-        Syn --> Ver
-        
-        Ver -->|Pass| End((End))
-        Ver -->|Fail| Retry[Retry Node]
-        Retry --> Sched
-    end
-    
-    subgraph "Data & Tools"
-        Res -->|Tool: search_knowledge_base| KG[Knowledge Graph Retriever]
-        KG -->|Vector Search| FAISS[(FAISS VectorStore)]
-        KG -->|Graph Traversal| NX[(NetworkX Graph)]
-        
-        Ops -->|Tool: calculate| Calc[Calculator]
-        Ops -->|Tool: check_system_status| Sys[System Status]
-    end
-```
+
+[View Architecture in Excalidraw](https://excalidraw.com/#json=8GyK29ttDA9_1130kpWHz,KHUDb5-Qpzoxzbs_BYNaMw)
 
 ### Key Components
 
@@ -70,7 +39,7 @@ graph TD
 
 1.  **Clone the repository**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/ZaafirRizwan/mini-agentic-rag-system.git
     cd mini-agentic-rag-system
     ```
 
@@ -111,6 +80,37 @@ The system excels at answering complex questions that require traversing multipl
 3.  **Research Agent (Task 2)**: Searches for "project blocked by Legacy-Auth-Service" and retrieves `legacy_auth_service.md` and `project_orion_roadmap.md`.
     *   *Result*: "Project Orion".
 4.  **Synthesis**: Combines findings to answer: "The service responsible was Legacy-Auth-Service, which is currently blocking Project Orion."
+
+### Example: Parallel Execution & Tool Use
+
+The Planner can intelligently route distinct parts of a query to different specialized agents.
+
+**Query:**
+> "tell me about nexus and subtract 25 from 4"
+
+**Agent Reasoning Trace:**
+1.  **Planner**: Identifies two independent tasks:
+    *   *Task 1*: Research "nexus" (Assigned to **ResearchAgent**).
+    *   *Task 2*: Calculate "subtract 25 from 4" (Assigned to **OpsAgent**).
+2.  **Scheduler**: Schedules both tasks to run.
+3.  **Research Agent (Task 1)**: Queries the Knowledge Graph for "nexus".
+    *   *Result*: Retrieves specs for Nexus-Goliath-v4 and Nexus-Flash-Lite.
+4.  **Ops Agent (Task 2)**: Uses the `calculate` tool.
+    *   *Result*: "-21".
+5.  **Synthesis**: Merges the technical specs with the calculation result into a single response.
+
+### Example: Error Handling & Graceful Failure
+
+The system handles missing information gracefully without hallucinating.
+
+**Query:**
+> "Find details about the module called PaymentRouter"
+
+**Agent Reasoning Trace:**
+1.  **Planner**: Creates a research task for "PaymentRouter".
+2.  **Research Agent**: Searches the knowledge base.
+    *   *Result*: "No information was found about a module called PaymentRouter."
+3.  **Synthesis**: Reports the negative result honestly: "Our investigation did not yield any information about a module with this specific name."
 
 ## ⚠️ Limitations
 
