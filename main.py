@@ -13,7 +13,8 @@ def main():
     initialize_knowledge_base()
     
     # 2. Setup Thread for Memory (Persists across this session)
-    thread_id = str(uuid.uuid4())
+    # Use a fixed thread_id to allow persistence across restarts
+    thread_id = "default_user_session"
     config = {"configurable": {"thread_id": thread_id}}
     
     print(colored("\nSystem Ready! (Type 'quit' to exit)", "green"))
@@ -43,7 +44,7 @@ def main():
                     print_step(key)
                     
                     # Debugging output for specific nodes
-                    if key == "tool_node":
+                    if key in ["research_tools", "ops_tools"]:
                         # Inspect tool output
                         last_msg = value['messages'][-1]
                         tool_name = getattr(last_msg, 'name', 'unknown_tool')
@@ -54,13 +55,31 @@ def main():
                         if tool_name == "search_knowledge_base":
                             context_retrieved = last_msg.content[:200] + "..." if len(last_msg.content) > 200 else last_msg.content
 
-                    if key == "reasoning_node":
-                        # Check if it's the final answer (no tool calls)
-                        last_msg = value['messages'][-1]
-                        if not last_msg.tool_calls:
-                            final_answer = last_msg.content
-                            print(colored(f"\nAgent: {final_answer}", "green", attrs=['bold']))
+                    if key == "planner_node":
+                        plan = value.get("plan")
+                        if plan:
+                            if plan.response:
+                                print(colored(f"\n📝 Direct Response: {plan.response}", "green", attrs=['bold']))
+                                final_answer = plan.response
+                            else:
+                                print(colored(f"   [Planner]: Generated {len(plan.tasks)} tasks", "cyan", attrs=['bold']))
+                                for task in plan.tasks:
+                                    print(colored(f"      - Task {task.id}: {task.description} (Agent: {task.assigned_agent})", "cyan"))
+
+                    if key == "scheduler_node":
+                        # Scheduler doesn't output much unless we want to see what's scheduled
+                        pass
+
+                    if key in ["research_agent", "ops_agent"]:
+                        # Workers now return 'results', not messages
+                        results = value.get("results", {})
+                        for task_id, result in results.items():
+                            print(colored(f"\n{key} (Task {task_id}): {result[:200]}...", "green", attrs=['bold']))
                     
+                    if key == "synthesis_node":
+                        final_answer = value['messages'][-1].content
+                        print(colored(f"\n📝 Synthesis: {final_answer}", "green", attrs=['bold']))
+
                     if key == "verification_node":
                         if 'messages' in value:
                             audit_res = value['messages'][-1].content

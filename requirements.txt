@@ -5,3 +5,4 @@ langchain-community
 networkx
 python-dotenv
 numpy
+langgraph-checkpoint-sqlite

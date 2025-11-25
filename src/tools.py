@@ -19,6 +19,8 @@ def check_system_status(service_name: str) -> str:
     Use this if the user asks about 'PaymentRouter' or 'AuthService'.
     """
     # Simulating the "Missing Data" challenge
-    if "paymentrouter" in service_name.lower():
-        return "ERROR: Service 'PaymentRouter' not found in registry."
-    return "Service is Operational."
+    import random
+    if random.random() > 0.7:  # Simulate a 30% chance of failure
+        return f"The '{service_name}' service is currently experiencing an outage. Our team has been notified and is working to resolve the issue."
+    else:
+        return f"The '{service_name}' service is operating normally. You may continue with your task."
