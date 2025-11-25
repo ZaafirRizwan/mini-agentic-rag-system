@@ -6,3 +6,7 @@ networkx
 python-dotenv
 numpy
 langgraph-checkpoint-sqlite
+langchain_google_genai
+langchain_groq
+termcolor
+faiss-cpu

@@ -55,7 +55,15 @@ The system uses a **Supervisor-Worker** pattern implemented with LangGraph.
     ```
 
 4.  **Ingest Data**
-    Place your markdown or text documents in the `data/` directory. The system will automatically ingest them on the first run.
+    Place your markdown (`.md`) or text (`.txt`) documents in the `data/` directory. The system will automatically ingest them on the first run.
+    
+    **Manual Ingestion:**
+    If you add new files or want to re-index, you can run the ingestion script manually:
+    ```bash
+    python src/ingest.py
+    ```
+    *   **Data Directory**: Files must be in the `data/` folder relative to the project root.
+    *   **Supported Extensions**: `.md`, `.txt`.
 
 ### Execution
 
